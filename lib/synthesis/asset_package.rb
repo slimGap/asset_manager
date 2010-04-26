@@ -2,12 +2,12 @@ module Synthesis
   class AssetPackage
 
     @asset_base_path    = "#{Rails.root}/public"
-    @asset_packages_yml = File.exists?("#{Rails.root}/config/asset_packages.yml") ? YAML.load_file("#{Rails.root}/config/asset_packages.yml") : nil
+    @asset_manager_yml = File.exists?("#{Rails.root}/config/asset_manager.yml") ? YAML.load_file("#{Rails.root}/config/asset_manager.yml") : nil
   
     # singleton methods
     class << self
       attr_accessor :asset_base_path,
-                    :asset_packages_yml
+                    :asset_manager_yml
 
       attr_writer   :merge_environments
       
@@ -20,17 +20,17 @@ module Synthesis
       end
 
       def find_by_type(asset_type)
-        asset_packages_yml[asset_type].map { |p| self.new(asset_type, p) }
+        asset_manager_yml[asset_type].map { |p| self.new(asset_type, p) }
       end
 
       def find_by_target(asset_type, target)
-        package_hash = asset_packages_yml[asset_type].find {|p| p.keys.first == target }
+        package_hash = asset_manager_yml[asset_type].find {|p| p.keys.first == target }
         package_hash ? self.new(asset_type, package_hash) : nil
       end
 
       def find_by_source(asset_type, source)
         path_parts = parse_path(source)
-        package_hash = asset_packages_yml[asset_type].find do |p|
+        package_hash = asset_manager_yml[asset_type].find do |p|
           key = p.keys.first
           p[key].include?(path_parts[2]) && (parse_path(key)[1] == path_parts[1])
         end
@@ -58,32 +58,32 @@ module Synthesis
       end
 
       def build_all
-        asset_packages_yml.keys.each do |asset_type|
-          asset_packages_yml[asset_type].each { |p| self.new(asset_type, p).build }
+        asset_manager_yml.keys.each do |asset_type|
+          asset_manager_yml[asset_type].each { |p| self.new(asset_type, p).build }
         end
       end
 
       def delete_all
-        asset_packages_yml.keys.each do |asset_type|
-          asset_packages_yml[asset_type].each { |p| self.new(asset_type, p).delete_previous_build }
+        asset_manager_yml.keys.each do |asset_type|
+          asset_manager_yml[asset_type].each { |p| self.new(asset_type, p).delete_previous_build }
         end
       end
 
       def create_yml
-        unless File.exists?("#{Rails.root}/config/asset_packages.yml")
+        unless File.exists?("#{Rails.root}/config/asset_manager.yml")
           asset_yml = Hash.new
 
           asset_yml['javascripts'] = [{"base" => build_file_list("#{Rails.root}/public/javascripts", "js")}]
           asset_yml['stylesheets'] = [{"base" => build_file_list("#{Rails.root}/public/stylesheets", "css")}]
 
-          File.open("#{Rails.root}/config/asset_packages.yml", "w") do |out|
+          File.open("#{Rails.root}/config/asset_manager.yml", "w") do |out|
             YAML.dump(asset_yml, out)
           end
 
-          log "config/asset_packages.yml example file created!"
+          log "config/asset_manager.yml example file created!"
           log "Please reorder files under 'base' so dependencies are loaded in correct order."
         else
-          log "config/asset_packages.yml already exists. Aborting task..."
+          log "config/asset_manager.yml already exists. Aborting task..."
         end
       end
 
@@ -103,7 +103,7 @@ module Synthesis
       @file_name = "#{@target}_packaged.#{@extension}"
       @full_path = File.join(@asset_path, @file_name)
     end
-  
+    
     def package_exists?
       File.exists?(@full_path)
     end
@@ -153,7 +153,7 @@ module Synthesis
       end
 
       def compress_js(source)
-        jsmin_path = "#{Rails.root}/vendor/plugins/asset_packager/lib"
+        jsmin_path = "#{Rails.root}/vendor/plugins/asset_manager/lib"
         tmp_path = "#{Rails.root}/tmp/#{@target}_packaged"
       
         # write out to a temp file

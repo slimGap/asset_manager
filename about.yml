@@ -1,8 +1,19 @@
-author: Scott Becker
-name: AssetPackager
-summary: JavaScript and CSS Asset Compression for Production Rails Apps
-homepage: http://synthesis.sbecker.net/pages/asset_packager
-plugin: http://sbecker.net/shared/plugins/asset_packager
+author: Chip Miller
+name: asset_manager
+summary: JavaScript and CSS Asset Management and Compression for Rails Apps
+homepage: http://github.com/slimGap/asset_manager
+plugin: git://github.com/slimGap/asset_manager.git
 license: MIT
-version: 0.2
-rails_version: 1.1.2+
+version: 0.1
+rails_version: 2.3.0+ #follows the application_controller nameing convention
+
+
+# Based on the work done by Scott Becker
+# author: Scott Becker
+# name: AssetPackager
+# summary: JavaScript and CSS Asset Compression for Production Rails Apps
+# homepage: http://synthesis.sbecker.net/pages/asset_packager
+# plugin: http://sbecker.net/shared/plugins/asset_packager
+# license: MIT
+# version: 0.2
+# rails_version: 1.1.2+

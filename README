@@ -1,178 +1,288 @@
-= AssetPackager
+h1. Manage JS & CSS with asset_manager
 
-JavaScript and CSS Asset Compression for Production Rails Apps
+{info:title=Proposal}
+This is a plugin for managing JavaScript and CSS in rails.  The idea is that we want to have css and javascript file in a directory structure and naming convention that will automatically include the correct files for a given controller if it exists.  We also want the ability to combine CSS or JavaScript files that are used together into a module and include them together by referencing the module name in a view.
 
-== Description
+This plugin allows you to declare assets at three scopes and group assets into modules:
+* *[*Application Wide*| #scope_application]* (Defined in app/views/layouts/*)
+* *[*Controller Wide*| #scope_controller]* (Loaded automatically by naming convention)
+* *[*View Specific*| #scope_page]* (Defined in individual view templates)
 
-When it comes time to deploy your new web application, instead of 
-sending down a dozen JavaScript and CSS files full of formatting 
-and comments, this Rails plugin makes it simple to merge and 
-compress JavaScript and CSS down into one or more files, increasing 
-speed and saving bandwidth.
+* *[*Group Assets*| #group_assets]* (Group assets into _modules_ in a single config file)
 
-When in development, it allows you to use your original versions 
-and retain formatting and comments for readability and debugging.
+In addition to these management features we want the capability to minify them and combine the files of each module into single files.
+{info}
 
-This code is released under the MIT license (like Ruby). You're free 
-to rip it up, enhance it, etc. And if you make any enhancements, 
-I'd like to know so I can add them back in. Thanks!
+h3. Asset Directory Structure
 
-* Formerly known as MergeJS.
+The same directory structure would be used for JavaScript and CSS.  The files that are at the base level of public/stylesheets/views/ will be included automatically if they exist.  Other files within that directory will be included explicitly in the sections that need them by the web developer.
 
-== Credit
+See the example below.
+{code}
+public/stylesheets/
+                   common/
+                          application.css
+                          reset.css
+                          ie6.css
+                          ...
+                   vendor/
+                          facebook.css                  # must be required where it's needed
+                          wysiwyg/
+                                  jquery.wysiwyg.css    # must be required where it's needed
+                                  jquery.wysisyg.gif
+                          ...
+                   views/
+                         about.css                      # automatic  (domain.com/about/*)
+                         about_forms.css                # must be required where it's needed
+                         admin/
+                               goals.css                # automatic  (domain.com/admin/goals/*)
+                         business.css                   # automatic  (domain.com/business/*)
+                         ...
+{code}
+{anchor:group_assets}
 
-This Rails Plugin was inspired by Cal Henderson's article 
-"Serving JavaScript Fast" on Vitamin:
-http://www.thinkvitamin.com/features/webapps/serving-javascript-fast
+h3. Group Assets Into Modules
 
-It also uses the Ruby JavaScript Minifier created by 
-Douglas Crockford.
-http://www.crockford.com/javascript/jsmin.html
+js/css files that are commonly used together can be grouped into _modules_ through a single configuration file.  A module can be called from any view, but most often from the main layout/application.html.erb file to be included universally. Consider the following example:
+{note:title=Files within a module are returned in the order they are listed.}
+{note}
 
-== Key Features
+h6. config/asset_manager.yml
 
-* Merges and compresses JavaScript and CSS when running in production.
-* Uses uncompressed originals when running in development.
-* Generates packages on demand in production
+{code}
+---
+javascripts:
+- base:
+  - vendor/jquery
+  - common/application
+- ui:
+  - vendor/effects
+  - vendor/dragdrop
+  - vendor/controls
+- lightbox:
+  - common/ie_patch
+  - vendor/lightbox
 
-== Components
+stylesheets:
+- base:
+  - common/reset
+  - common/global
+  - common/application
+- ie_support:
+  - common/ie6
+  - common/ie7
+- facebook:
+  - common/fb_global
+  - vendor/fb_box
+- lightbox:
+  - vendor/lightbox
+{code}
+{tip:title=Call modules using a :symbol and individual files using 'path/to/file'}
+* Include application-wide assets using *stylesheet_manager_base* & *javascript_manager_base*
+* Include page specific assets using *stylesheet_manager* & *javascript_manager*
+{tip}
 
-* Rake tasks for managing packages
-* Helper functions for including these JavaScript and CSS files in your views.
-* YAML configuration file for mapping JavaScript and CSS files to packages.
-* Rake Task for auto-generating the YAML file from your existing JavaScript files.
+h6. app/view/layout/application.html.erb
 
-== Updates
+{code}
+<html>
+  <head>
+    <%= stylesheet_manager_base :base, :ie_support  %>
+    ...
+  </head>
+  <body>
+    ...
+    <%= javascript_manager_base :base, :ui %>
+  </body>
+</html>
+{code}
 
-November '08:
-* Rails 2.2 compatibility fixes
-* No more mucking with internal Rails functions, which means:
-  * Return to use of query-string timestamps. Greatly simplifies things.
-  * Multiple asset-hosts supported
-  * Filenames with "."'s in them, such as "jquery-x.x.x" are supported.
-* Now compatible with any revision control system since it no longer uses revision numbers.
-* Packages generated on demand in production mode. Running create_all rake task no longer necessary.
+h6. app/view/goals/index.html.erb
 
-== How to Use:
+{code}
+<% javascript_manager :lightbox, 'view/goals/something_fancy_and_big' -%>
+<% stylesheet_manager :lightbox, 'view/goals/something_fancy_and_big' -%>
+{code}
+\\
+\\
 
-1. Download and install the plugin:
-   ./script/plugin install git://github.com/sbecker/asset_packager.git
+----
+h2. +Setup+
 
-2. Run the rake task "asset:packager:create_yml" to generate the /config/asset_packages.yml
-file the first time. You will need to reorder files under 'base' so dependencies are loaded 
-in correct order. Feel free to rename or create new file packages.
 
-IMPORTANT: JavaScript files can break once compressed if each statement doesn't end with a semi-colon.
-The minifier puts multiple statements on one line, so if the semi-colon is missing, the statement may no 
-longer makes sense and cause a syntax error.
+h4. Install Plugin
 
-== Examples of config/asset_packages.yml
 
-Example from a fresh rails app after running the rake task. (Stylesheets is blank because a 
-default rails app has no stylesheets yet.):
+h6. Download the Plugin
 
---- 
-javascripts: 
-- base: 
-  - prototype
-  - effects
-  - dragdrop
-  - controls
-  - application
-stylesheets: 
-- base: []
+{code}
+./script/plugin install http://svn.sf.akqa.com/Akqa.LaMancha/trunk/rails/plugins/asset_manager
+{code}
+This technique uses a modified version of [http://github.com/sbecker/asset_packager].
+\\
+\\
 
-Multiple packages:
+h4. Add Content Hooks to Layouts
 
+The plugin collects call for js/css files from anywhere within a view and neatly loads them here:
+
+h6. app/views/layouts/application.html.erb
+
+{code:none}
+<html>
+  <head>
+    <%= stylesheet_manager_base :base, :ie_support  %>
+    ...
+  </head>
+  <body>
+    ...
+    <%= javascript_manager_base :base, :ui %>
+  </body>
+</html>
+{code}
+Add these lines to the beginning and end of your layout.
+\\
+
+h2. +Usage+
+
+{anchor:scope_application}
+
+h4. Application: Always Include Assets
+
+Include application wide assets on every page by adding the following calls to the application layout:
+_(before yield :page_etc)_
+* stylesheet_link_merged
+* javascript_include_merged
+
+h6. app/views/layouts/application.html.erb
+
+{code:none}
+<head>
+  <%= stylesheet_manager_base :base, "application" %>
+  ...
+  <%= javascript_manager_base :base %>
+<body/>
+{code}
+{note:title=Be sure to use <%= ... %> }
+{note}
+\\
+
+{anchor:scope_controller}
+
+h4. Controller: Automatically Load Matching Assets
+
+Similar to Rails' template convention, the plugin automatically loads js/css files that match the controllers name. If no file exist, no file is loaded.
+{code:none}
+app/views/blog/*
+
+Automatically loads:
+ - public/javascripts/views/blog.js
+ - public/stylesheets/views/blog.css
+{code}
+\\
+
+{anchor:scope_page}
+
+h4. Page: Declare Page Specific Assets
+
+Include assets from within any view-template using the 'stylesheets' & and 'javascript' helpers.
+
+h6. app/views/\*
+
+{code:none}
+<% stylesheet_manager 'random-y', 'lightbox/random-z'  %>
+<% javascript_manager 'random-z' %>
+{code}
+{note:title=Be sure to use <% ... %> }
+{note}
+\\
+
+h6. Passes the following to to the application layout:
+
+{code:none}
+<link href="/stylesheets/random-y.css"                                    media="screen" rel="stylesheet" type="text/css" />
+<link href="/stylesheets/lightbox/random-z.css?1271967808"                media="screen" rel="stylesheet" type="text/css" />
+{code}
+{code:none}
+<script src="/javascripts/random-z.js?1271912562"                         type="text/javascript"></script>
+{code}
+\\
+
+h4. File Order
+
+Assets are loaded in the following order:
+* *[*Application Wide*| #scope_application]* (Defined in app/views/layouts/*)
+* *[*Controller Wide*| #scope_controller]* (Loaded automatically by naming convention)
+* *[*View Specific*| #scope_page]* (Defined in individual view templates)
+
+Files _within_ a module are returned in the order they are listed.  Modules can be mixed-in with individual files.
+
+h6. config/asset_manager.yml
+
+{code:none}
 ---
 javascripts:
 - base:
   - prototype
-  - effects
-  - controls
-  - dragdrop
   - application
-- secondary:
-  - foo
-  - bar
+- ui:
+  - effects
+  - dragdrop
+  - controls
 stylesheets:
 - base:
-  - screen
-  - header
-- secondary:
-  - foo
-  - bar
+  - reset
+  - common
+  - scaffold
+{code}
+In a given call, assets are loaded in the order they are specified.
+{code:none}
+<% javascript_manager 'must_be_first', :base, :ui, 'next_to_last', 'last' %>
+{code}
+ *returns:*
+{code:none}
+<script src="/javascripts/must_be_first.js?1271913222"                type="text/javascript"></script>
+<script src="/javascripts/prototype.js?1271912562"                    type="text/javascript"></script>
+<script src="/javascripts/effects.js?1271912562"                      type="text/javascript"></script>
+<script src="/javascripts/dragdrop.js?1271912562"                     type="text/javascript"></script>
+<script src="/javascripts/controls.js?1271912562"                     type="text/javascript"></script>
+<script src="/javascripts/application.js?1271912562"                  type="text/javascript"></script>
+<script src="/javascripts/next_to_last.js?1271912562"                 type="text/javascript"></script>
+<script src="/javascripts/last.js?1271912562"                         type="text/javascript"></script>
+{code}
+\\
+\\
 
-3. Run the rake task "asset:packager:build_all" to generate the compressed, merged versions
-for each package. Whenever you rearrange the yaml file, you'll need to run this task again. 
+----
+h2. +Implementation+
 
-Merging and compressing is expensive, so this is something we want to do once, not every time
-your app starts. Thats why its a rake task. You can run this task via Capistrano when deploying
-to avoid an initially slow request the first time a page is generated. 
+1) Install the plugin
+2) Add manager_base calls to application layouts.
+3) Correct the load order of the files in config/asset_manager.yml
 
-Note: The package will be generated on the fly if it doesn't yet exist, so you don't *need* 
-to run the rake task when deploying, its just recommended for speeding up initial requests.
+h6. app/views/layouts/application.html/erb
 
-4. Use the helper functions whenever including these files in your application. See below for examples.
+{code}
+<html>
+  <head>
+    <%= stylesheet_manager_base %>
+    ...
+  </head>
+  <body>
+    ...
+    <%= javascript_manager_base %>
+  </body>
+</html>
+{code}
+{note:title=Be sure to use <%= ... %> }
+{note}
+\\
 
-5. Potential warning: css compressor function currently removes CSS comments. This might blow
-away some CSS hackery. To disable comment removal, comment out /lib/synthesis/asset_package.rb line 176.
+h4. Rake Tasks
 
-== JavaScript Examples
-
-Example call (based on above /config/asset_packages.yml):
-  <%= javascript_include_merged :base %>
-
-In development, this generates: 
-  <script type="text/javascript" src="/javascripts/prototype.js?1228027240"></script>
-  <script type="text/javascript" src="/javascripts/effects.js?1228027240"></script>
-  <script type="text/javascript" src="/javascripts/controls.js?1228027240"></script>
-  <script type="text/javascript" src="/javascripts/dragdrop.js?1228027240"></script>
-  <script type="text/javascript" src="/javascripts/application.js?1228027240"></script>
-
-In production, this generates: 
-  <script type="text/javascript" src="/javascripts/base_packaged.js?123456789"></script>
-
-== Stylesheet Examples
-
-Example call:
-  <%= stylesheet_link_merged :base %>
-
-In development, this generates:
-  <link href="/stylesheets/screen.css?1228027240" media="screen" rel="Stylesheet" type="text/css" />
-  <link href="/stylesheets/header.css?1228027240" media="screen" rel="Stylesheet" type="text/css" />
-
-In production this generates:
-  <link href="/stylesheets/base_packaged.css?1228027240" media="screen" rel="Stylesheet" type="text/css" />
-
-== Different CSS Media
-
-All options for stylesheet_link_tag still work, so if you want to specify a different media type:
-  <%= stylesheet_link_merged :secondary, 'media' => 'print' %>
-
-== Rake tasks
-
-rake asset:packager:build_all        # Merge and compress assets
-rake asset:packager:create_yml       # Generate asset_packages.yml from existing assets
-rake asset:packager:delete_all       # Delete all asset builds
-
-== Running the tests
-
-This plugin has a full suite of tests. But since they
-depend on rails, it has to be run in the context of a
-rails app, in the vendor/plugins directory. Observe:
-
-> rails newtestapp
-> cd newtestapp
-> ./script/plugin install ./script/plugin install git://github.com/sbecker/asset_packager.git
-> rake test:plugins PLUGIN=asset_packager # all tests pass
-
-== License
-Copyright (c) 2006-2008 Scott Becker - http://synthesis.sbecker.net
-Contact via Github for change requests, etc.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+{code:none}
+rake asset:manager:build_all        # Merge and compress assets
+rake asset:manager:create_yml       # Generate asset_manager.yml from existing assets
+rake asset:manager:delete_all       # Delete all asset builds
+{code}
+\\

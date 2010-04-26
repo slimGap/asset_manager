@@ -6,8 +6,8 @@ class AssetPackagerTest < Test::Unit::TestCase
   include Synthesis
   
   def setup
-    Synthesis::AssetPackage.asset_base_path    = "#{Rails.root}/vendor/plugins/asset_packager/test/assets"
-    Synthesis::AssetPackage.asset_packages_yml = YAML.load_file("#{Rails.root}/vendor/plugins/asset_packager/test/asset_packages.yml")
+    Synthesis::AssetPackage.asset_base_path    = "#{Rails.root}/vendor/plugins/asset_manager/test/assets"
+    Synthesis::AssetPackage.asset_manager_yml = YAML.load_file("#{Rails.root}/vendor/plugins/asset_manager/test/asset_manager.yml")
 
     Synthesis::AssetPackage.any_instance.stubs(:log)
     Synthesis::AssetPackage.build_all
@@ -18,10 +18,10 @@ class AssetPackagerTest < Test::Unit::TestCase
   end
   
   def test_find_by_type
-    js_asset_packages = Synthesis::AssetPackage.find_by_type("javascripts")
-    assert_equal 2, js_asset_packages.length
-    assert_equal "base", js_asset_packages[0].target
-    assert_equal ["prototype", "effects", "controls", "dragdrop"], js_asset_packages[0].sources
+    js_asset_manager = Synthesis::AssetPackage.find_by_type("javascripts")
+    assert_equal 2, js_asset_manager.length
+    assert_equal "base", js_asset_manager[0].target
+    assert_equal ["prototype", "effects", "controls", "dragdrop"], js_asset_manager[0].sources
   end
   
   def test_find_by_target

@@ -80,7 +80,7 @@ tolerate extra periods in source asset names. fixed subversion revision checking
 ------------------------------------------------------------------------
 r26 | sbecker | 2006-06-24 17:04:27 -0400 (Sat, 24 Jun 2006) | 1 line
 
-convert asset_packages_yml var to a class var
+convert asset_manager_yml var to a class var
 ------------------------------------------------------------------------
 r25 | sbecker | 2006-06-24 12:37:47 -0400 (Sat, 24 Jun 2006) | 1 line
 
