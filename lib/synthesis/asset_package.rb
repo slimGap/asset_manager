@@ -73,8 +73,16 @@ module Synthesis
         unless File.exists?("#{Rails.root}/config/asset_manager.yml")
           asset_yml = Hash.new
 
-          asset_yml['javascripts'] = [{"base" => build_file_list("#{Rails.root}/public/javascripts", "js")}]
-          asset_yml['stylesheets'] = [{"base" => build_file_list("#{Rails.root}/public/stylesheets", "css")}]
+          asset_yml['javascripts'] = [
+            {"base" => build_file_list("#{Rails.root}/public/javascripts/", "js")},
+            {"common" => build_file_list("#{Rails.root}/public/javascripts/common", "js")},
+            {"vendor" => build_file_list("#{Rails.root}/public/javascripts/vendor", "js")}
+          ]
+          asset_yml['stylesheets'] = [
+            {"base" => build_file_list("#{Rails.root}/public/stylesheets/", "css")},
+            {"common" => build_file_list("#{Rails.root}/public/stylesheets/common", "css")},
+            {"vendor" => build_file_list("#{Rails.root}/public/stylesheets/vendor", "css")}
+          ]
 
           File.open("#{Rails.root}/config/asset_manager.yml", "w") do |out|
             YAML.dump(asset_yml, out)
@@ -200,10 +208,12 @@ module Synthesis
 
       def self.build_file_list(path, extension)
         re = Regexp.new(".#{extension}\\z")
+        directory = path.gsub(/.*(javascripts|stylesheets)\//, '')
+        directory = nil if directory.blank?
         file_list = Dir.new(path).entries.delete_if { |x| ! (x =~ re) }.map {|x| x.chomp(".#{extension}")}
         # reverse javascript entries so prototype comes first on a base rails app
         file_list.reverse! if extension == "js"
-        file_list
+        file_list.collect {|file| [directory, file].compact.join('/') }
       end
    
   end
