@@ -43,7 +43,7 @@ module Synthesis
           package = find_by_target(asset_type, source) || find_by_source(asset_type, source)
           package_names << (package ? package.current_file : source)
         end
-        package_names.uniq
+        package_names.reverse.uniq.reverse
       end
 
       def sources_from_targets(asset_type, targets)
@@ -54,7 +54,7 @@ module Synthesis
             package.target_dir.gsub(/^(.+)$/, '\1/') + src
           end : target.to_a)
         end
-        source_names.uniq
+        source_names.reverse.uniq.reverse
       end
 
       def build_all
