@@ -72,7 +72,7 @@ module Synthesis
       def create_yml
         unless File.exists?("#{Rails.root}/config/asset_manager.yml")
           asset_yml = Hash.new
-
+          
           asset_yml['javascripts'] = [
             {"base" => build_file_list("#{Rails.root}/public/javascripts/", "js")},
             {"common" => build_file_list("#{Rails.root}/public/javascripts/common", "js")},
@@ -85,6 +85,7 @@ module Synthesis
           ]
 
           File.open("#{Rails.root}/config/asset_manager.yml", "w") do |out|
+            out << "# These arrays are combined and minified in production\n\n"
             YAML.dump(asset_yml, out)
           end
 
