@@ -18,7 +18,7 @@ end
 puts 'Adding before_filter to application_controller'
 
 line = 'class ApplicationController < ActionController::Base'
-new_line = "\#asset_manager plugin - required to load controller-scoped assets automaticly\nbefore_filter :auto_load_controller_assets"
+new_line = "\#asset_manager plugin - required to load controller-scoped assets automaticly\nbefore_filter :auto_load_assets"
 
 gsub_file 'app/controllers/application_controller.rb', /(#{Regexp.escape(line)})/mi do |match|
   "#{match}\n #{new_line}\n"

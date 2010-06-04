@@ -11,6 +11,7 @@ module Synthesis
 
     def javascript_manager_base(*sources)
       sources << @controller_js           if @controller_js
+      sources << @action_js               if @action_js
       @page_js.each { |a| sources << a }  if @page_js
       options = sources.last.is_a?(Hash) ? sources.pop.stringify_keys : { }
 
@@ -32,6 +33,7 @@ module Synthesis
 
     def stylesheet_manager_base(*sources)
       sources << @controller_css          if @controller_css
+      sources << @action_css              if @action_css
       @page_css.each { |a| sources << a } if @page_css
       options = sources.last.is_a?(Hash) ? sources.pop.stringify_keys : { }
 
@@ -44,10 +46,15 @@ module Synthesis
     end
 
     
-    def auto_load_controller_assets
+    def auto_load_assets
       current_controller = self.controller_path
-      @controller_js  = current_controller if File.exists?("#{RAILS_ROOT}/public/javascripts/views/#{ current_controller }.js")
-      @controller_css = current_controller if File.exists?("#{RAILS_ROOT}/public/stylesheets/views/#{ current_controller }.css")
+      current_action     = self.action_name
+      
+      @controller_js  = "views/#{current_controller}" if File.exists?("#{RAILS_ROOT}/public/javascripts/views/#{ current_controller }.js")
+      @controller_css = "views/#{current_controller}" if File.exists?("#{RAILS_ROOT}/public/stylesheets/views/#{ current_controller }.css")
+      
+      @action_js  = "views/#{current_controller}/#{current_action}" if File.exists?("#{RAILS_ROOT}/public/javascripts/views/#{ current_controller }/#{current_action}.js")
+      @action_css = "views/#{current_controller}/#{current_action}" if File.exists?("#{RAILS_ROOT}/public/stylesheets/views/#{ current_controller }/#{current_action}.css")
     end
 
     
